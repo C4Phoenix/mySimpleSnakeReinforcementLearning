@@ -1,7 +1,6 @@
 
 #%%
 #!pip install -e ./env/Sneks_master
-
 #%%
 import gym
 import sneks
@@ -13,12 +12,18 @@ import pandas as pd
 import numpy as np
 
 #%%
-maxSnakeLife = 1000
+maxSnakeLife = 10000
 hunger = 200
-gameSize = 32
-env = SingleSnek(obs_type='rgb', n_food=20, size=(gameSize,gameSize), dynamic_step_limit=hunger,
-                 step_limit=maxSnakeLife + 1,render_zoom=50, add_walls=False)
-
+gameSize = 10
+env = SingleSnek(obs_type='rgb',
+                 n_food=96,
+                 size=(gameSize, gameSize),
+                 dynamic_step_limit=hunger,
+                 step_limit=maxSnakeLife + 1,
+                 render_zoom=50,
+                 add_walls=False)
+env.seed(123)
+np.random.seed(123)
 #%%
 rewards = list()
 totalreward = 0
@@ -38,7 +43,7 @@ move_count = 0
 #%%
 observation = env.reset()
 for _ in tqdm(range(maxSnakeLife)):
-  env.render()
+  #env.render()
   action = env.action_space.sample() # your agent here (this takes random actions)
 
   move_count += 1
