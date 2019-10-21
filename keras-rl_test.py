@@ -5,6 +5,9 @@
 import numpy as np
 import gym
 
+from keras import backend
+backend.tensorflow_backend._get_available_gpus()
+
 from keras.models import Sequential
 from keras.layers import Dense, Activation, Flatten
 from keras.optimizers import Adam
@@ -16,7 +19,7 @@ from rl.memory import SequentialMemory
 import wandb
 from wandb.keras import WandbCallback
 wandb.init(project="my-test-cartpoll-project")
-
+#%%
 
 ENV_NAME = 'CartPole-v0'
 
@@ -35,8 +38,9 @@ model.add(Activation('relu'))
 
 model.add(Dense(16))
 model.add(Activation('relu'))
-#model.add(Dense(16))
-#model.add(Activation('relu'))
+
+model.add(Dense(16))
+model.add(Activation('relu'))
 
 model.add(Dense(nb_actions))
 model.add(Activation('linear'))
@@ -45,7 +49,7 @@ print(model.summary())
 
 # Finally, we configure and compile our agent. You can use every built-in Keras optimizer and
 # even the metrics!
-step_limit = 25000#50000
+step_limit = 3000#50000
 memory = SequentialMemory(limit=step_limit, window_length=1)
 policy = BoltzmannQPolicy()
 dqn = DQNAgent(model=model, nb_actions=nb_actions, memory=memory, nb_steps_warmup=10,

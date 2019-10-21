@@ -43,7 +43,7 @@ move_count = 0
 #%%
 observation = env.reset()
 for _ in tqdm(range(maxSnakeLife)):
-  #env.render()
+  env.render()
   action = env.action_space.sample() # your agent here (this takes random actions)
 
   move_count += 1
@@ -59,7 +59,7 @@ for _ in tqdm(range(maxSnakeLife)):
     move_count = 0
 
     action0.append(move[0])    
-    action1.append(move[1])    
+    action1.append(move[1])
     action2.append(move[2])    
     action3.append(move[3])
     move.clear()
