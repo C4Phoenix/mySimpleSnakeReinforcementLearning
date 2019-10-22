@@ -27,11 +27,11 @@ from rl.policy import BoltzmannQPolicy
 from rl.memory import SequentialMemory
 from rl.core import Processor
 
-#import online logging
+#%%import online logging
 import wandb
+import os
 from wandb.keras import WandbCallback
 wandb.init(project="simple_snake")
-
 
 #%% prep envoriment
 maxSnakeLife = 1#10000
@@ -71,7 +71,7 @@ model.add(Activation('linear'))
 
 print(model.summary())
 
-#%% build processor to for the input
+# build processor to for the input
 # class my_input_processor(Processor):
 #   def __init__(self):
 #     print("using my_input_processor")
@@ -99,12 +99,11 @@ dqn = DQNAgent(
 dqn.compile(Adam(lr=1e-3), metrics=['mae'])
 
 #%% train!
-#dqn.fit(env, nb_steps=step_limit, visualize=True, verbose=1, callbacks=[WandbCallback()])
-dqn.fit(env, nb_steps=step_limit, visualize=True, verbose=1)
+dqn.fit(env, nb_steps=step_limit, visualize=True, verbose=1, callbacks=[WandbCallback()])
+#dqn.fit(env, nb_steps=step_limit, visualize=True, verbose=1)
 
-#%% save
+# save
 model.save(os.path.join(wandb.run.dir, "model.h5"))
 #dqn.save_weights('dqn_simpleSnake_weights.h5f', overwrite=True)
 #%%
 dqn.test(env, nb_episodes=5, visualize=True)
-
