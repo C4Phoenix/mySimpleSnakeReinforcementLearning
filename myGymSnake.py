@@ -1,8 +1,9 @@
 
 #%%
 #!pip install -e ./env/Sneks_master
-#%5
-print("hello world")
+#!pip install --upgrade wandb
+#!wandb login f244ffe13b0872010de2092f7a8fe61186506c10
+
 #%% imports
 #import envirement
 import numpy as np
@@ -26,12 +27,18 @@ from rl.policy import BoltzmannQPolicy
 from rl.memory import SequentialMemory
 from rl.core import Processor
 
+#import online logging
+import wandb
+from wandb.keras import WandbCallback
+wandb.init(project="simple_snake")
+
+
 #%% prep envoriment
 maxSnakeLife = 1#10000
 hunger = 200
 gameSize = 10
 env = SingleSnek(obs_type='raw',#test 'raw'
-                 n_food=6,
+                 n_food=96,
                  size=(gameSize, gameSize),
                  dynamic_step_limit=hunger,
                  step_limit=maxSnakeLife + 1,
@@ -65,23 +72,23 @@ model.add(Activation('linear'))
 print(model.summary())
 
 #%% build processor to for the input
-class my_input_processor(Processor):
-  def __init__(self):
-    print("using my_input_processor")
+# class my_input_processor(Processor):
+#   def __init__(self):
+#     print("using my_input_processor")
   
-    def process_state_batch(self, batch):
-      returnList = list()
-      print(batch)
-      for state in batch:
-        returnList.append(state[0])
-      return returnList
+#     def process_state_batch(self, batch):
+#       returnList = list()
+#       print(batch)
+#       for state in batch:
+#         returnList.append(state[0])
+#       return returnList
 
 #%% initialize agent
 step_limit = 3000
 memory = SequentialMemory(limit=step_limit, window_length=1)
 policy = BoltzmannQPolicy()
 dqn = DQNAgent(
-               processor=my_input_processor(),
+               #processor=my_input_processor(),
                model=model, 
                nb_actions=nb_acthions,
                memory=memory,
@@ -95,19 +102,9 @@ dqn.compile(Adam(lr=1e-3), metrics=['mae'])
 #dqn.fit(env, nb_steps=step_limit, visualize=True, verbose=1, callbacks=[WandbCallback()])
 dqn.fit(env, nb_steps=step_limit, visualize=True, verbose=1)
 
+#%% save
+model.save(os.path.join(wandb.run.dir, "model.h5"))
+#dqn.save_weights('dqn_simpleSnake_weights.h5f', overwrite=True)
 #%%
 dqn.test(env, nb_episodes=5, visualize=True)
-#%%
-observation = env.reset()
-for _ in tqdm(range(maxSnakeLife)):
-  env.render()
-  action = env.action_space.sample() # your agent here (this takes random actions)
 
-  observation, reward, done, info = env.step(action)
-  print(observation)
-  print(observation.shape)
-  if done:
-    observation = env.reset()
-env.close()
-
-#%%
