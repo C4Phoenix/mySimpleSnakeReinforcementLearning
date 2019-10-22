@@ -34,14 +34,14 @@ from wandb.keras import WandbCallback
 wandb.init(project="simple_snake")
 
 #%% prep envoriment
-maxSnakeLife = 1#10000
-hunger = 200
+maxSnakeLife = 10000
+hunger = 100
 gameSize = 10
-env = SingleSnek(obs_type='raw',#test 'raw'
-                 n_food=96,
+env = SingleSnek(obs_type='raw',
+                 n_food=1,
                  size=(gameSize, gameSize),
                  dynamic_step_limit=hunger,
-                 step_limit=maxSnakeLife + 1,
+                 step_limit=hunger,
                  render_zoom=50,
                  add_walls=False)
 env.seed(123)
@@ -49,19 +49,23 @@ nb_acthions = env.action_space.n
 
 #%% build model
 model = Sequential()
+
 model.add(Conv2D(kernel_size=(3,3),# midden plus zijkant
                  input_shape=(1,gameSize,gameSize),# 1 voor het aantal channels
                  activation='relu',
                  data_format='channels_first',
-                 filters=16))# filters elke kop 'directie; van 2 pixels 8 * 2 voor iets extra's?
+                 filters=18))# filters elke kop 'directie; van 2 pixels 8 * 2 voor iets extra's?
 
 model.add(Conv2D(kernel_size=(3,3),# midden plus zijkant
                  data_format='channels_first',
                  activation='relu',
-                 filters=16))# filters elke kop 'directie; van 2 pixels 8 * 2 voor iets extra's?
+                 filters=9))# filters elke kop 'directie; van 2 pixels 8 * 2 voor iets extra's?
 
 model.add(Flatten())
 #model.add(Activation('relu'))
+
+model.add(Dense(16))
+model.add(Activation('relu'))
 
 model.add(Dense(16))
 model.add(Activation('relu'))
@@ -84,9 +88,10 @@ print(model.summary())
 #       return returnList
 
 #%% initialize agent
-step_limit = 3000
+step_limit = 10000
 memory = SequentialMemory(limit=step_limit, window_length=1)
 policy = BoltzmannQPolicy()
+fileName = 'saved_Weights/dqn_simpleSnake_weights.h5f'
 dqn = DQNAgent(
                #processor=my_input_processor(),
                model=model, 
@@ -97,13 +102,14 @@ dqn = DQNAgent(
                policy=policy)
 
 dqn.compile(Adam(lr=1e-3), metrics=['mae'])
-
+#dqn.load_weights(fileName)
 #%% train!
 dqn.fit(env, nb_steps=step_limit, visualize=True, verbose=1, callbacks=[WandbCallback()])
 #dqn.fit(env, nb_steps=step_limit, visualize=True, verbose=1)
-
+env.render(close=True)
 # save
 model.save(os.path.join(wandb.run.dir, "model.h5"))
-#dqn.save_weights('dqn_simpleSnake_weights.h5f', overwrite=True)
+dqn.save_weights(fileName, overwrite=True)
 #%%
 dqn.test(env, nb_episodes=5, visualize=True)
+env.render(close=True)
