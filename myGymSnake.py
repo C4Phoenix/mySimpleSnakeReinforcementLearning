@@ -1,6 +1,8 @@
 
 #%%
 #!pip install -e ./env/Sneks_master
+#%5
+print("hello world")
 #%% imports
 #import envirement
 import numpy as np
@@ -41,7 +43,7 @@ nb_acthions = env.action_space.n
 #%% build model
 model = Sequential()
 model.add(Conv2D(kernel_size=(3,3),# midden plus zijkant
-                 input_shape=(gameSize,gameSize,1),# 1 voor het aantal channels
+                 input_shape=(1,gameSize,gameSize),# 1 voor het aantal channels
                  activation='relu',
                  data_format='channels_first',
                  filters=16))# filters elke kop 'directie; van 2 pixels 8 * 2 voor iets extra's?
@@ -69,6 +71,7 @@ class my_input_processor(Processor):
   
     def process_state_batch(self, batch):
       returnList = list()
+      print(batch)
       for state in batch:
         returnList.append(state[0])
       return returnList
@@ -78,7 +81,7 @@ step_limit = 3000
 memory = SequentialMemory(limit=step_limit, window_length=1)
 policy = BoltzmannQPolicy()
 dqn = DQNAgent(
-               #processor=my_input_processor(),
+               processor=my_input_processor(),
                model=model, 
                nb_actions=nb_acthions,
                memory=memory,
@@ -89,8 +92,8 @@ dqn = DQNAgent(
 dqn.compile(Adam(lr=1e-3), metrics=['mae'])
 
 #%% train!
-#dqn.fit(env, nb_steps=step_limit, visualize=True, verbose=2, callbacks=[WandbCallback()])
-dqn.fit(env, nb_steps=step_limit, visualize=True, verbose=2)
+#dqn.fit(env, nb_steps=step_limit, visualize=True, verbose=1, callbacks=[WandbCallback()])
+dqn.fit(env, nb_steps=step_limit, visualize=True, verbose=1)
 
 #%%
 dqn.test(env, nb_episodes=5, visualize=True)
