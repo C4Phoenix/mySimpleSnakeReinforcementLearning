@@ -123,7 +123,10 @@ class my_input_processor(Processor):
 # something = my_input_processor().process_observation(ob)
 
 #%% load model
-
+from keras.models import load_model
+loadFromFile = True
+if(loadFromFile):
+    model = load_model('model.h5')
 
 #%% initialize agent
 step_limit = 200000
@@ -143,7 +146,7 @@ dqn.compile(Adam(lr=1e-3), metrics=['mae'])
 #dqn.load_weights(fileName)
 #%% train!
 Checkpoint = ModelCheckpoint(os.path.join(wandb.run.dir, "model.h5"), verbose=1, save_best_only=False, save_weights_only=True, period=500)
-dqn.fit(env, nb_steps=step_limit, visualize=False, verbose=1, callbacks=[WandbCallback(), Checkpoint])
+dqn.fit(env, nb_steps=step_limit, visualize=True, verbose=1, callbacks=[WandbCallback(), Checkpoint])
 #dqn.fit(env, nb_steps=step_limit, visualize=True, verbose=1)
 env.render(close=True)
 print("saving....")
