@@ -57,12 +57,12 @@ model.add(Conv2D(kernel_size=(3,3),# midden plus zijkant
                  input_shape=(1,observationSize,observationSize),# 1 voor het aantal channels
                  activation='relu',
                  data_format='channels_first',
-                 filters=18))# filters elke kop 'directie; van 2 pixels 8 * 2 voor iets extra's?
+                 filters=32))# filters elke kop 'directie; van 2 pixels 8 * 2 voor iets extra's?
 
 model.add(Conv2D(kernel_size=(3,3),# midden plus zijkant
                  data_format='channels_first',
                  activation='relu',
-                 filters=9))# filters elke kop 'directie; van 2 pixels 8 * 2 voor iets extra's?
+                 filters=16))# filters elke kop 'directie; van 2 pixels 8 * 2 voor iets extra's?
 
 model.add(Conv2D(kernel_size=(3,3),# midden plus zijkant
                  data_format='channels_first',
@@ -78,6 +78,9 @@ model.add(Dense(24))
 model.add(Activation('relu'))
 
 model.add(Dense(16))
+model.add(Activation('relu'))
+
+model.add(Dense(8))
 model.add(Activation('relu'))
 
 model.add(Dense(nb_acthions))
@@ -119,8 +122,11 @@ class my_input_processor(Processor):
 # ob, _, _, _ = env.step(0)
 # something = my_input_processor().process_observation(ob)
 
+#%% load model
+
+
 #%% initialize agent
-step_limit = 100000
+step_limit = 200000
 memory = SequentialMemory(limit=step_limit, window_length=1)
 policy = BoltzmannQPolicy()
 fileName = 'saved_Weights/dqn_simpleSnake_weights.h5f'
@@ -136,7 +142,7 @@ dqn = DQNAgent(
 dqn.compile(Adam(lr=1e-3), metrics=['mae'])
 #dqn.load_weights(fileName)
 #%% train!
-Checkpoint = ModelCheckpoint(os.path.join(wandb.run.dir, "model.h5"), monitor='val_acc', verbose=1, save_best_only=False, save_weights_only=True, mode='auto', period=5000)
+Checkpoint = ModelCheckpoint(os.path.join(wandb.run.dir, "model.h5"), verbose=1, save_best_only=False, save_weights_only=True, period=500)
 dqn.fit(env, nb_steps=step_limit, visualize=False, verbose=1, callbacks=[WandbCallback(), Checkpoint])
 #dqn.fit(env, nb_steps=step_limit, visualize=True, verbose=1)
 env.render(close=True)
