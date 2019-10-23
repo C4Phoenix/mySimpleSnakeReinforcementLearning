@@ -17,6 +17,7 @@ from tqdm import tqdm
 from keras.models import Sequential
 from keras.layers import Dense, Activation, Flatten, Conv2D
 from keras.optimizers import Adam
+from keras.callbacks.callbacks import ModelCheckpoint
 
 from keras import backend
 backend.tensorflow_backend._get_available_gpus()
@@ -31,7 +32,7 @@ from rl.core import Processor
 import wandb
 import os
 from wandb.keras import WandbCallback
-#wandb.init(project="simple_snake")
+wandb.init(project="simple_snake")
 
 #%% prep envoriment
 maxSnakeLife = 10000
@@ -39,7 +40,7 @@ hunger = 100
 gameSize = 8
 
 env = SingleSnek(obs_type='raw',
-                 n_food=1,
+                 n_food=8,
                  size=(gameSize,gameSize),
                  dynamic_step_limit=hunger,
                  step_limit=hunger,
@@ -63,10 +64,17 @@ model.add(Conv2D(kernel_size=(3,3),# midden plus zijkant
                  activation='relu',
                  filters=9))# filters elke kop 'directie; van 2 pixels 8 * 2 voor iets extra's?
 
-model.add(Flatten())
-#model.add(Activation('relu'))
+model.add(Conv2D(kernel_size=(3,3),# midden plus zijkant
+                 data_format='channels_first',
+                 activation='relu',
+                 filters=4))# filters elke kop 'directie; van 2 pixels 8 * 2 voor iets extra's?
 
-model.add(Dense(16))
+model.add(Flatten())
+
+model.add(Dense(32))
+model.add(Activation('relu'))
+
+model.add(Dense(24))
 model.add(Activation('relu'))
 
 model.add(Dense(16))
@@ -112,7 +120,7 @@ class my_input_processor(Processor):
 # something = my_input_processor().process_observation(ob)
 
 #%% initialize agent
-step_limit = 10000
+step_limit = 100000
 memory = SequentialMemory(limit=step_limit, window_length=1)
 policy = BoltzmannQPolicy()
 fileName = 'saved_Weights/dqn_simpleSnake_weights.h5f'
@@ -128,13 +136,11 @@ dqn = DQNAgent(
 dqn.compile(Adam(lr=1e-3), metrics=['mae'])
 #dqn.load_weights(fileName)
 #%% train!
-#dqn.fit(env, nb_steps=step_limit, visualize=True, verbose=1, callbacks=[WandbCallback()])
-dqn.fit(env, nb_steps=step_limit, visualize=True, verbose=1)
+Checkpoint = ModelCheckpoint(os.path.join(wandb.run.dir, "model.h5"), monitor='val_acc', verbose=1, save_best_only=False, save_weights_only=True, mode='auto', period=5000)
+dqn.fit(env, nb_steps=step_limit, visualize=False, verbose=1, callbacks=[WandbCallback(), Checkpoint])
+#dqn.fit(env, nb_steps=step_limit, visualize=True, verbose=1)
 env.render(close=True)
 print("saving....")
-# save
-model.save(os.path.join(wandb.run.dir, "model.h5"))
-dqn.save_weights(fileName, overwrite=True)
 #%%
 dqn.test(env, nb_episodes=5, visualize=True)
 env.render(close=True)
