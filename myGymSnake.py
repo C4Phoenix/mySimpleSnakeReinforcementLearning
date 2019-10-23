@@ -80,24 +80,36 @@ print(model.summary())
 #%%build processor to for the input
 class my_input_processor(Processor):
     def __init__(self):
+        self.last = (1,1)
         return 
 
     def process_observation(self, observation):
+        # print('\n',observation, '\n')
         headCoordinate = (-1, -1)
-        for x in range(gameSize):
-            for y in range(gameSize):
+        for x in range(len(observation)):
+            for y in range(len(observation[x])):
                 if (observation[x][y] == 101):
                     headCoordinate = (x, y)
                     break
             if(headCoordinate != (-1, -1)):
                 break
+        if(headCoordinate == (-1, -1)): #if head isnt found (probably when dead it processes this)
+            headCoordinate = self.last # use last head position
+        else:
+            self.last = headCoordinate
+        newObservation = np.zeros((observationSize, observationSize), dtype=observation.dtype)
         offsets = (gameSize - headCoordinate[0]- 1,
                    gameSize - headCoordinate[1] - 1)
-        newObservation = np.zeros((observationSize, observationSize), dtype=observation.dtype)
-        for x in range(gameSize):
-            for y in range(gameSize):
+        for x in range(len(observation)):
+            for y in range(len(observation[x])):
                 newObservation[offsets[0] + x][offsets[1] + y] = observation[x][y]
+        # print('n',newObservation,'n')
         return newObservation
+
+#%% to test processor
+# env.reset()
+# ob, _, _, _ = env.step(0)
+# something = my_input_processor().process_observation(ob)
 
 #%% initialize agent
 step_limit = 10000
