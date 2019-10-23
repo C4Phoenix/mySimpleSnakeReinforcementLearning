@@ -126,7 +126,7 @@ class my_input_processor(Processor):
 from keras.models import load_model
 loadFromFile = True
 if(loadFromFile):
-    model = load_model('model.h5')
+    model.load_weights('model.h5')
 
 #%% initialize agent
 step_limit = 200000
