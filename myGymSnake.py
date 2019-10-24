@@ -125,32 +125,32 @@ class my_input_processor(Processor):
 #%% load model
 from keras.models import load_model
 loadFromFile = True
+warmup_steps = 100
 if(loadFromFile):
+    warmup_steps = 20#needs at least 1 entry to start
     model.load_weights('model.h5')
 
 #%% initialize agent
-step_limit = 200000
-memory = SequentialMemory(limit=step_limit, window_length=1)
+step_limit = 300000
+memory = SequentialMemory(limit=10000, window_length=1)
 policy = BoltzmannQPolicy()
-fileName = 'saved_Weights/dqn_simpleSnake_weights.h5f'
 dqn = DQNAgent(
                processor=my_input_processor(),
                model=model, 
                nb_actions=nb_acthions,
                memory=memory,
-               nb_steps_warmup=30,
+               nb_steps_warmup=warmup_steps,
                target_model_update=1e-2, #how often to update the target model. t_m_u<1 = slowly update the model
                policy=policy)
 
 dqn.compile(Adam(lr=1e-3), metrics=['mae'])
-#dqn.load_weights(fileName)
 #%% train!
-Checkpoint = ModelCheckpoint(os.path.join(wandb.run.dir, "model.h5"), verbose=1, save_best_only=False, save_weights_only=True, period=500)
-dqn.fit(env, nb_steps=step_limit, visualize=True, verbose=1, callbacks=[WandbCallback(), Checkpoint])
+Checkpoint = ModelCheckpoint(os.path.join(wandb.run.dir, "model.h5"), verbose=1, save_best_only=False, save_weights_only=True, period=300)
+dqn.fit(env, nb_steps=step_limit, visualize=False, verbose=1, callbacks=[WandbCallback(), Checkpoint])
 #dqn.fit(env, nb_steps=step_limit, visualize=True, verbose=1)
 env.render(close=True)
 print("saving....")
+dqn.save_weights(os.path.join(wandb.run.dir, "model_final.h5"))
 #%%
 dqn.test(env, nb_episodes=5, visualize=True)
 env.render(close=True)
-
