@@ -32,15 +32,19 @@ from rl.core import Processor
 import wandb
 import os
 from wandb.keras import WandbCallback
-wandb.init(project="simple_snake")
+
+loadFromFile = False
+testOnly = False
+if (not testOnly):
+    wandb.init(project="simple_snake")
 
 #%% prep envoriment
 maxSnakeLife = 10000
-hunger = 100
+hunger = 500
 gameSize = 8
 
 env = SingleSnek(obs_type='raw',
-                 n_food=8,
+                 n_food=60,
                  size=(gameSize,gameSize),
                  dynamic_step_limit=hunger,
                  step_limit=hunger,
@@ -57,12 +61,13 @@ model.add(Conv2D(kernel_size=(3,3),# midden plus zijkant
                  input_shape=(1,observationSize,observationSize),# 1 voor het aantal channels
                  activation='relu',
                  data_format='channels_first',
-                 filters=32))# filters elke kop 'directie; van 2 pixels 8 * 2 voor iets extra's?
-
-model.add(Conv2D(kernel_size=(3,3),# midden plus zijkant
-                 data_format='channels_first',
-                 activation='relu',
                  filters=16))# filters elke kop 'directie; van 2 pixels 8 * 2 voor iets extra's?
+                #  filters=32))# filters elke kop 'directie; van 2 pixels 8 * 2 voor iets extra's?
+
+# model.add(Conv2D(kernel_size=(3,3),# midden plus zijkant
+#                  data_format='channels_first',
+#                  activation='relu',
+#                  filters=16))# filters elke kop 'directie; van 2 pixels 8 * 2 voor iets extra's?
 
 model.add(Conv2D(kernel_size=(3,3),# midden plus zijkant
                  data_format='channels_first',
@@ -77,8 +82,8 @@ model.add(Activation('relu'))
 model.add(Dense(24))
 model.add(Activation('relu'))
 
-model.add(Dense(16))
-model.add(Activation('relu'))
+# model.add(Dense(16))
+# model.add(Activation('relu'))
 
 model.add(Dense(8))
 model.add(Activation('relu'))
@@ -124,14 +129,14 @@ class my_input_processor(Processor):
 
 #%% load model
 from keras.models import load_model
-loadFromFile = True
 warmup_steps = 100
 if(loadFromFile):
     warmup_steps = 20#needs at least 1 entry to start
     model.load_weights('model.h5')
 
+
 #%% initialize agent
-step_limit = 300000
+step_limit = 100000
 memory = SequentialMemory(limit=10000, window_length=1)
 policy = BoltzmannQPolicy()
 dqn = DQNAgent(
@@ -144,6 +149,13 @@ dqn = DQNAgent(
                policy=policy)
 
 dqn.compile(Adam(lr=1e-3), metrics=['mae'])
+
+#%% testLoaded model
+if (testOnly and loadFromFile):
+    dqn.test(env, nb_episodes=20, visualize=True)
+    env.render(close=True)
+    exit()
+
 #%% train!
 Checkpoint = ModelCheckpoint(os.path.join(wandb.run.dir, "model.h5"), verbose=1, save_best_only=False, save_weights_only=True, period=300)
 dqn.fit(env, nb_steps=step_limit, visualize=False, verbose=1, callbacks=[WandbCallback(), Checkpoint])

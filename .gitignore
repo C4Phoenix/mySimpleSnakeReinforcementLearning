@@ -1,2 +1,4 @@
 wandb/
 dqn_CartPole-v0_weights.h5f
+model.h5
+mode_oldl.h5
