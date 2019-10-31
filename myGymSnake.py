@@ -88,7 +88,7 @@ model.add(Activation('relu'))
 model.add(Dense(16))
 model.add(Activation('relu'))
 
-# model.add(Dense(8))
+# model.add(Dense(16))
 # model.add(Activation('relu'))
 
 model.add(Dense(nb_acthions))
@@ -149,7 +149,7 @@ dqn = DQNAgent(
                memory=memory,
                nb_steps_warmup=warmup_steps,
                enable_dueling_network=True,
-               dueling_type='avg',
+               dueling_type='max',
                target_model_update=1e-2, #how often to update the target model. t_m_u<1 = slowly update the model
                policy=policy)
 
@@ -163,7 +163,7 @@ if (testOnly and loadFromFile):
 
 #%% train!
 Checkpoint = ModelCheckpoint(os.path.join(wandb.run.dir, "model.h5"), verbose=0, save_best_only=True, save_weights_only=True, period=200)
-earlyStopper = EarlyStopping(monitor='reward', min_delta=0, patience=300, verbose=0, mode='auto', baseline=None, restore_best_weights=False)
+earlyStopper = EarlyStopping(monitor='episode_reward', min_delta=0, patience=400, verbose=0, mode='auto', baseline=None, restore_best_weights=False)
 dqn.fit(env, nb_steps=step_limit, visualize=False, verbose=1, callbacks=[WandbCallback(), Checkpoint, earlyStopper])
 #dqn.fit(env, nb_steps=step_limit, visualize=True, verbose=1)
 env.render(close=True)
