@@ -17,7 +17,7 @@ from tqdm import tqdm
 from keras.models import Sequential
 from keras.layers import Dense, Activation, Flatten, Conv2D, MaxPooling2D
 from keras.optimizers import Adam
-from keras.callbacks.callbacks import ModelCheckpoint
+from keras.callbacks.callbacks import ModelCheckpoint, EarlyStopping
 
 from keras import backend
 backend.tensorflow_backend._get_available_gpus()
@@ -44,7 +44,7 @@ hunger = 100
 gameSize = 8
 
 env = SingleSnek(obs_type='raw',
-                 n_food=60,
+                 n_food=30,
                  size=(gameSize,gameSize),
                  dynamic_step_limit=hunger,
                  step_limit=hunger,
@@ -62,22 +62,21 @@ model.add(Conv2D(kernel_size=(2,2),
                  input_shape=(1,observationSize,observationSize),
                  activation='relu',
                  data_format='channels_first',
-                 filters=16))
+                 filters=10))
 
 model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
-
-# model.add(Conv2D(kernel_size=(3,3),# midden plus zijkant
-#                  data_format='channels_first',
-#                  activation='relu',
-#                  filters=16))# filters elke kop 'directie; van 2 pixels 8 * 2 voor iets extra's?
-
-model.add(Conv2D(kernel_size=(3,3),# midden plus zijkant
+model.add(Conv2D(kernel_size=(2,2),# midden plus zijkant
                  data_format='channels_first',
                  activation='relu',
-                 filters=32))
+                 filters=20))# filters elke kop 'directie; van 2 pixels 8 * 2 voor iets extra's?
 
 model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
+model.add(Conv2D(kernel_size=(2,2),# midden plus zijkant
+                 data_format='channels_first',
+                 activation='relu',
+                 filters=30))
 
+model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
 model.add(Flatten())
 
 model.add(Dense(32))
@@ -149,6 +148,8 @@ dqn = DQNAgent(
                nb_actions=nb_acthions,
                memory=memory,
                nb_steps_warmup=warmup_steps,
+            #    enable_dueling_network=True,
+            #    dueling_type='avg',
                target_model_update=1e-2, #how often to update the target model. t_m_u<1 = slowly update the model
                policy=policy)
 
@@ -161,8 +162,8 @@ if (testOnly and loadFromFile):
     exit()
 
 #%% train!
-Checkpoint = ModelCheckpoint(os.path.join(wandb.run.dir, "model.h5"), verbose=1, save_best_only=False, save_weights_only=True, period=200)
-earlyStopper = EarlyStopping(monitor='reward', min_delta=0, patience=0, verbose=0, mode='auto', baseline=None, restore_best_weights=False)
+Checkpoint = ModelCheckpoint(os.path.join(wandb.run.dir, "model.h5"), verbose=0, save_best_only=True, save_weights_only=True, period=200)
+earlyStopper = EarlyStopping(monitor='reward', min_delta=0, patience=300, verbose=0, mode='auto', baseline=None, restore_best_weights=False)
 dqn.fit(env, nb_steps=step_limit, visualize=False, verbose=1, callbacks=[WandbCallback(), Checkpoint, earlyStopper])
 #dqn.fit(env, nb_steps=step_limit, visualize=True, verbose=1)
 env.render(close=True)
