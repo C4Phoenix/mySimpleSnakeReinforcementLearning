@@ -15,7 +15,7 @@ from tqdm import tqdm
 
 #import model
 from keras.models import Sequential
-from keras.layers import Dense, Activation, Flatten, Conv2D
+from keras.layers import Dense, Activation, Flatten, Conv2D, MaxPooling2D
 from keras.optimizers import Adam
 from keras.callbacks.callbacks import ModelCheckpoint
 
@@ -33,8 +33,8 @@ import wandb
 import os
 from wandb.keras import WandbCallback
 
-loadFromFile = True
-testOnly = True
+loadFromFile = False
+testOnly = False
 if (not testOnly):
     wandb.init(project="simple_snake")
 
@@ -44,7 +44,7 @@ hunger = 100
 gameSize = 8
 
 env = SingleSnek(obs_type='raw',
-                 n_food=10,
+                 n_food=60,
                  size=(gameSize,gameSize),
                  dynamic_step_limit=hunger,
                  step_limit=hunger,
@@ -57,12 +57,14 @@ observationSize = gameSize*2-1
 #%% build model
 model = Sequential()
 
-model.add(Conv2D(kernel_size=(3,3),# midden plus zijkant
-                 input_shape=(1,observationSize,observationSize),# 1 voor het aantal channels
+model.add(Conv2D(kernel_size=(2,2),
+                 strides=(1,1),
+                 input_shape=(1,observationSize,observationSize),
                  activation='relu',
                  data_format='channels_first',
-                 filters=16))# filters elke kop 'directie; van 2 pixels 8 * 2 voor iets extra's?
-                #  filters=32))# filters elke kop 'directie; van 2 pixels 8 * 2 voor iets extra's?
+                 filters=16))
+
+model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
 
 # model.add(Conv2D(kernel_size=(3,3),# midden plus zijkant
 #                  data_format='channels_first',
@@ -72,7 +74,9 @@ model.add(Conv2D(kernel_size=(3,3),# midden plus zijkant
 model.add(Conv2D(kernel_size=(3,3),# midden plus zijkant
                  data_format='channels_first',
                  activation='relu',
-                 filters=4))# filters elke kop 'directie; van 2 pixels 8 * 2 voor iets extra's?
+                 filters=32))
+
+model.add(MaxPooling2D(pool_size=(2, 2), strides=(2, 2)))
 
 model.add(Flatten())
 
@@ -82,11 +86,11 @@ model.add(Activation('relu'))
 model.add(Dense(24))
 model.add(Activation('relu'))
 
-# model.add(Dense(16))
-# model.add(Activation('relu'))
-
-model.add(Dense(8))
+model.add(Dense(16))
 model.add(Activation('relu'))
+
+# model.add(Dense(8))
+# model.add(Activation('relu'))
 
 model.add(Dense(nb_acthions))
 model.add(Activation('linear'))
@@ -157,8 +161,9 @@ if (testOnly and loadFromFile):
     exit()
 
 #%% train!
-Checkpoint = ModelCheckpoint(os.path.join(wandb.run.dir, "model.h5"), verbose=1, save_best_only=False, save_weights_only=True, period=300)
-dqn.fit(env, nb_steps=step_limit, visualize=True, verbose=1, callbacks=[WandbCallback(), Checkpoint])
+Checkpoint = ModelCheckpoint(os.path.join(wandb.run.dir, "model.h5"), verbose=1, save_best_only=False, save_weights_only=True, period=200)
+earlyStopper = EarlyStopping(monitor='reward', min_delta=0, patience=0, verbose=0, mode='auto', baseline=None, restore_best_weights=False)
+dqn.fit(env, nb_steps=step_limit, visualize=False, verbose=1, callbacks=[WandbCallback(), Checkpoint, earlyStopper])
 #dqn.fit(env, nb_steps=step_limit, visualize=True, verbose=1)
 env.render(close=True)
 print("saving....")
