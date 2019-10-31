@@ -148,8 +148,8 @@ dqn = DQNAgent(
                nb_actions=nb_acthions,
                memory=memory,
                nb_steps_warmup=warmup_steps,
-            #    enable_dueling_network=True,
-            #    dueling_type='avg',
+               enable_dueling_network=True,
+               dueling_type='avg',
                target_model_update=1e-2, #how often to update the target model. t_m_u<1 = slowly update the model
                policy=policy)
 
