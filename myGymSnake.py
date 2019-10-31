@@ -33,18 +33,18 @@ import wandb
 import os
 from wandb.keras import WandbCallback
 
-loadFromFile = False
-testOnly = False
+loadFromFile = True
+testOnly = True
 if (not testOnly):
     wandb.init(project="simple_snake")
 
 #%% prep envoriment
 maxSnakeLife = 10000
-hunger = 500
+hunger = 100
 gameSize = 8
 
 env = SingleSnek(obs_type='raw',
-                 n_food=60,
+                 n_food=10,
                  size=(gameSize,gameSize),
                  dynamic_step_limit=hunger,
                  step_limit=hunger,
@@ -152,13 +152,13 @@ dqn.compile(Adam(lr=1e-3), metrics=['mae'])
 
 #%% testLoaded model
 if (testOnly and loadFromFile):
-    dqn.test(env, nb_episodes=20, visualize=True)
+    dqn.test(env, nb_episodes=50, visualize=True)
     env.render(close=True)
     exit()
 
 #%% train!
 Checkpoint = ModelCheckpoint(os.path.join(wandb.run.dir, "model.h5"), verbose=1, save_best_only=False, save_weights_only=True, period=300)
-dqn.fit(env, nb_steps=step_limit, visualize=False, verbose=1, callbacks=[WandbCallback(), Checkpoint])
+dqn.fit(env, nb_steps=step_limit, visualize=True, verbose=1, callbacks=[WandbCallback(), Checkpoint])
 #dqn.fit(env, nb_steps=step_limit, visualize=True, verbose=1)
 env.render(close=True)
 print("saving....")
