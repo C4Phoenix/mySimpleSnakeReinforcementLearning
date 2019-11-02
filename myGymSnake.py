@@ -2,7 +2,7 @@
 #%%
 #!pip install -e ./env/Sneks_master
 #!pip install --upgrade wandb
-#!wandb login 
+#!wandb login f244ffe13b0872010de2092f7a8fe61186506c10
 
 #%% imports
 #import envirement
@@ -88,9 +88,6 @@ model.add(Activation('relu'))
 model.add(Dense(16))
 model.add(Activation('relu'))
 
-# model.add(Dense(16))
-# model.add(Activation('relu'))
-
 model.add(Dense(nb_acthions))
 model.add(Activation('linear'))
 
@@ -153,7 +150,7 @@ dqn = DQNAgent(
                target_model_update=1e-2, #how often to update the target model. t_m_u<1 = slowly update the model
                policy=policy)
 
-dqn.compile(Adam(lr=1e-3), metrics=['mae'])
+dqn.compile(Adam(lr=5e-4), metrics=['mae'])
 
 #%% testLoaded model
 if (testOnly and loadFromFile):
