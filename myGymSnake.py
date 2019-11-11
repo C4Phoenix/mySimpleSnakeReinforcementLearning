@@ -2,7 +2,6 @@
 #%%
 #!pip install -e ./env/Sneks_master
 #!pip install --upgrade wandb
-#!wandb login f244ffe13b0872010de2092f7a8fe61186506c10
 
 #%% imports
 #import envirement
